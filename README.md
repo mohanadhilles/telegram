@@ -1,5 +1,3 @@
-If you are a software engineer with 20 years of experience, and you are tasked with gathering requirements for a project like a Telegram app, you would focus on the following key areas:
-
 ### 1. **Core Features:**
    - **User Registration & Authentication:**
      - Mobile number verification via OTP.
