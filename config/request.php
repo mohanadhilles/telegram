@@ -29,5 +29,6 @@ return [
     'rsp_token_exception' => 455,
     'rsp_invalid_params' => 422,
     'rsp_email_limit' => 429,
+    'rsp_error_occurred' => 500
 
 ];

@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Events\UserTyping;
 use App\Http\Controllers\Controller;
+use App\Libraries\Helpers;
+use App\Service\FireBase\FirebaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
+
+
+    protected const PATH_FILE = "users";
 
     /**
      * @param Request $request
@@ -17,7 +22,7 @@ class UserController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'string|max:255',
             'bio' => 'nullable|string|max:4000',
             'photo' => 'nullable|image|max:2048',
         ]);
@@ -27,14 +32,12 @@ class UserController extends Controller
         $user->bio = $request->bio;
 
         if ($request->hasFile('photo')) {
-            if ($user->photo) {
-                Storage::delete($user->photo);
-            }
-            // Store new photo
-            $path = $request->file('photo')->store('profile_pictures', 'public');
-            $user->photo = $path;
+            $file = $request->file('photo');
+            $mimeType = $request->file('photo')->getMimeType();
+            $mediaType = Helpers::getMediaTypeFromMimeType($mimeType);
+            $firebaseUrl = app(FirebaseStorageService::class)->handle($file, $mediaType, self::PATH_FILE);
+            $user->photo = $firebaseUrl;
         }
-
         $user->save();
 
         return response()->json(['message' => 'Profile updated successfully', 'user' => $user], config('request.rsp_success'));

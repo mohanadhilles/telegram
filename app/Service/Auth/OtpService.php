@@ -12,10 +12,11 @@ class OtpService
 
     public function __construct()
     {
-        $firebaseCredentialsPath = storage_path('firebase/telegram-90c89-firebase-adminsdk-houta-eeff8f2a7a.json');
-        $factory = (new Factory)->withServiceAccount($firebaseCredentialsPath);
+
+        $factory = (new Factory)->withServiceAccount(config('firebase.service_account'));
         $this->auth = $factory->createAuth();
     }
+
 
     /**
      * Generate and send OTP using Firebase
@@ -40,7 +41,7 @@ class OtpService
             // Send OTP via Firebase (you need to implement this in your front-end)
             $this->sendOtp($mobileNumber, $otp);
         } catch (\Exception $exception) {
-            app('log')->error('[generateOtp]'.$exception->getMessage());
+            app('log')->error('[generateOtp]' . $exception->getMessage());
         }
     }
 

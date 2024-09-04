@@ -54,4 +54,25 @@ class Helpers
         return json_encode($result);
     }
 
+    /**
+     * Get media type from MIME type.
+     *
+     * @param string $mimeType
+     * @return string
+     */
+    public static function getMediaTypeFromMimeType(string $mimeType): string
+    {
+        // Map MIME types to media types
+        $mediaTypeMap = [
+            'image/jpeg' => 'image',
+            'image/png' => 'image',
+            'image/gif' => 'image',
+            'video/mp4' => 'video',
+            'audio/mpeg' => 'audio',
+            // Add more MIME types and their corresponding media types as needed
+        ];
+
+        return $mediaTypeMap[$mimeType] ?? 'unknown'; // Default to 'unknown' if MIME type is not mapped
+    }
+
 }
