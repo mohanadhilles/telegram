@@ -3,5 +3,5 @@
 
 return [
 
-   'service_account' => env('FIREBASE_CREDENTIALS_PATH'),
+   'service_account' => storage_path('firebase/telegram-90c89-firebase-adminsdk-houta-eeff8f2a7a.json'),
 ];
