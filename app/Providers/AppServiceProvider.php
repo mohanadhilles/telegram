@@ -9,6 +9,7 @@ use App\Repositories\MessageRepository;
 use App\Repositories\ReplyThreadInterface;
 use App\Repositories\ReplyThreadRepository;
 use App\Service\Auth\OtpService;
+use App\Service\FireBase\ChatUpdates;
 use App\Service\FireBase\FirebaseStorageService;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +17,7 @@ use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Factory;
 use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
             return new FirebaseStorageService();
         });
 
+        $this->app->singleton(ChatUpdates::class, function ($app) {
+            return new ChatUpdates();
+        });
+
         $this->app->singleton(OtpService::class, function ($app) {
             return new OtpService();
         });
@@ -37,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
             $firebase = (new Factory)->withServiceAccount(config('firebase.service_account'));
             return $firebase->createMessaging();
         });
+
 
 
         $this->app->bind(MessageInterface::class,MessageRepository::class);

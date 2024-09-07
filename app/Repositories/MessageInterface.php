@@ -19,12 +19,12 @@ interface MessageInterface
     /**
      * Retrieve a message by its ID.
      *
-     * @param int $id
      * @param int $userId
+     * @param int $receiverId
      * @return Message
      * @throws \Exception
      */
-    public function getMessageById($id, $userId);
+    public function getMessageById($userId, $receiverId);
 
     /**
      * Get all messages for a specific user, optionally filtered by read/unread status.
@@ -66,4 +66,13 @@ interface MessageInterface
      * @throws \Exception
      */
     public function deleteMessage(int $messageId): ?bool;
+
+    /**
+     * @param int $senderId
+     * @param $receiverId
+     * @param $data
+     * @return false
+     * @throws \Exception
+     */
+    public function updateMessage(int $senderId, $receiverId, $data);
 }

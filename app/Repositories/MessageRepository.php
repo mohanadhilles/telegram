@@ -35,23 +35,22 @@ class MessageRepository implements MessageInterface
     /**
      * Retrieve a message by its ID.
      *
-     * @param int $id
      * @param int $userId
-     * @return Message
+     * @param int $receiverId
+     * @return \Illuminate\Contracts\Pagination\Paginator
      * @throws \Exception
      */
-    public function getMessageById($id, $userId, ?bool $isRead = null)
+    public function getMessageById($userId, $receiverId, ?bool $isRead = null)
     {
         try {
-            return Message::with(['media','receiver:id,name,photo,is_online']) // Eager load receiver's details
-                ->when($isRead !== null, function ($query) use ($isRead) {
-                    $query->where('is_read', $isRead);
-                })
-                ->where(function ($query) use ($userId) {
-                    $query->where('sender_id', $userId)
-                        ->orWhere('receiver_id', $userId);
-                })->where('id', $id)
-                ->first();
+            return Message::with(['media', 'receiver:id,name,photo,is_online']) // Eager load receiver's details
+            ->when($isRead !== null, function ($query) use ($isRead) {
+                $query->where('is_read', $isRead);
+            })->where(function ($query) use ($userId) {
+                $query->where('sender_id', $userId);
+            })->where('receiver_id', $receiverId)
+                ->orderBy('id', 'desc')
+                ->simplePaginate(config('settings.pagination'));
 
         } catch (ModelNotFoundException $e) {
             app('log')->error('Message not found: ' . $e->getMessage());
@@ -75,21 +74,28 @@ class MessageRepository implements MessageInterface
                 $query->where('sender_id', $userId)
                     ->orWhere('receiver_id', $userId);
             })
-                ->with(['receiver:id,name,photo,is_online']) // Eager load receiver's details
+                ->with([
+                    'receiver:id,name,photo,is_online',
+                    'sender:id,name,photo,is_online'
+                ])
                 ->when($isRead !== null, function ($query) use ($isRead) {
                     $query->where('is_read', $isRead);
                 })
-                ->orderBy('updated_at', 'desc')->simplePaginate(config('settings.pagination'));
+                ->select('id', 'content', 'created_at', 'sender_id', 'receiver_id')
+                ->groupBy('receiver_id')
+                ->orderBy('id', 'desc')
+                ->simplePaginate(config('settings.pagination'));
 
             return $query;
         } catch (QueryException $e) {
-            app('log')->error('Database query error: [getMessagesForUser] ' . $e->getMessage());
+            app('log')->error("Database query error [getMessagesForUser]: {$e->getMessage()} | User ID: {$userId}");
             throw new \Exception(__('messages.query_error'));
         } catch (\Exception $e) {
-            app('log')->error('Unexpected error: [getMessagesForUser] ' . $e->getMessage());
+            app('log')->error("Unexpected error [getMessagesForUser]: {$e->getMessage()} | User ID: {$userId}");
             throw new \Exception(__('messages.unexpected_error'));
         }
     }
+
 
     /**
      * Get unread messages for a specific user.
@@ -145,7 +151,6 @@ class MessageRepository implements MessageInterface
     {
         try {
             $message = Message::find($messageId);
-
             if ($message) {
                 $message->markAsRead();
                 return true;
@@ -177,6 +182,27 @@ class MessageRepository implements MessageInterface
             return false;
         } catch (\Exception $e) {
             app('log')->error('Unexpected error: [deleteMessage] ' . $e->getMessage());
+            throw new \Exception(__('messages.unexpected_error'));
+        }
+    }
+
+    /**
+     * @param int $senderId
+     * @param $receiverId
+     * @param $data
+     * @return false
+     * @throws \Exception
+     */
+    public function updateMessage(int $senderId, $receiverId, $data)
+    {
+        try {
+           return Message::where([
+                'receiver_id' => $receiverId,
+                'sender_id' => $senderId
+            ])->update($data);
+
+        } catch (\Exception $e) {
+            app('log')->error('Unexpected error: [updateMessage] ' . $e->getMessage());
             throw new \Exception(__('messages.unexpected_error'));
         }
     }

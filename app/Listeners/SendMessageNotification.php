@@ -4,9 +4,7 @@ namespace App\Listeners;
 
 use App\Events\MessageSent;
 use Kreait\Firebase\Contract\Messaging;
-
 use Kreait\Firebase\Factory;
-use Laravel\Sanctum\PersonalAccessToken;
 
 
 class SendMessageNotification
@@ -38,7 +36,6 @@ class SendMessageNotification
     {
         $message = $event->message;
 
-        // Check if the message has a recipient token
         if (!$message->recipient_token) {
             app('log')->error('Recipient token is missing.');
             return;

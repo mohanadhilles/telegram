@@ -22,13 +22,6 @@ interface ForwardedMessageInterface
      */
     public function getForwardedMessagesForUser(int $userId): Collection;
 
-    /**
-     * Create a new forwarded message.
-     *
-     * @param array $data
-     * @return ForwardedMessage
-     */
-    public function createForwardedMessage(array $data): ForwardedMessage;
 
     /**
      * Delete a forwarded message by its ID.

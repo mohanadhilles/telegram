@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ForwardedMessage;
+use App\Models\Message;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
@@ -17,6 +18,11 @@ class ForwardedMessageRepository implements ForwardedMessageInterface
     public function create(array $data)
     {
         try {
+            Message::query()->where('id', $data['original_message_id'])
+                ->update([
+                    'is_forwarded' => 1,
+                ]);
+
             return ForwardedMessage::create($data);
         } catch (\Exception $e) {
             app('log')->error('Error creating ForwardedMessage: ' . $e->getMessage());
@@ -41,25 +47,6 @@ class ForwardedMessageRepository implements ForwardedMessageInterface
             throw new \Exception(__('messages.query_error'));
         } catch (\Exception $e) {
             app('log')->error('Unexpected error: [getForwardedMessagesForUser] ' . $e->getMessage());
-            throw new \Exception(__('messages.unexpected_error'));
-        }
-    }
-
-    /**
-     * Create a new forwarded message.
-     *
-     * @param array $data
-     * @return ForwardedMessage
-     */
-    public function createForwardedMessage(array $data): ForwardedMessage
-    {
-        try {
-            return ForwardedMessage::create($data);
-        } catch (QueryException $e) {
-            app('log')->error('Database query error: [createForwardedMessage] ' . $e->getMessage());
-            throw new \Exception(__('messages.query_error'));
-        } catch (\Exception $e) {
-            app('log')->error('Unexpected error: [createForwardedMessage] ' . $e->getMessage());
             throw new \Exception(__('messages.unexpected_error'));
         }
     }

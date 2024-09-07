@@ -17,5 +17,5 @@ return [
     'reply_thread_not_found' => 'Reply thread not found.',
     'broadcast_failed' => 'Failed to send the broadcast message. Please try again later.',
     'firebase_send_error' => 'Failed to send notification via Firebase: :error',
-
+    'message_typing_success' => 'Typing status updated',
 ];

@@ -42,19 +42,4 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Profile updated successfully', 'user' => $user], config('request.rsp_success'));
     }
-
-    public function updateTypingStatus(Request $request)
-    {
-        $user = $request->user();
-        $isTyping = $request->is_typing;
-
-        $user->is_typing = $isTyping;
-        $user->save();
-
-        broadcast(new UserTyping($user->id, $isTyping));
-
-        return response()->json(['message' => 'Typing status updated']);
-    }
-
-
 }

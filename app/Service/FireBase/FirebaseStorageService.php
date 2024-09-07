@@ -54,7 +54,7 @@ class FirebaseStorageService
     private function generateFilePath($file, $mediaType, $path)
     {
         $extension = $file->getClientOriginalExtension();
-        return sprintf($path,'/%s/%s.%s', $mediaType, uniqid(), $extension);
+        return sprintf('%s/%s/%s.%s', $path, $mediaType, uniqid(), $extension);
     }
 
     /**
@@ -103,6 +103,6 @@ class FirebaseStorageService
     private function handleUploadError($exception)
     {
         app('log')->error('Unexpected error:[uploadFile] ' . $exception->getMessage());
-        throw new \Exception(__('messages.unexpected_error'));
+        throw new \Exception(__('lang::messages.error_occurred'));
     }
 }

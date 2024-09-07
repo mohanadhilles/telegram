@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1\Messages;
 
 use App\Http\Controllers\Controller;
 use App\Libraries\Helpers;
+use App\Service\FireBase\ChatUpdates;
 use App\Service\FireBase\FirebaseStorageService;
 use App\Service\Messages\MessageService;
 use Illuminate\Http\Request;
@@ -17,7 +18,6 @@ class MessageController extends Controller
     protected $firebaseStorageService;
 
     protected const PATH_FILES = 'messages';
-
 
     public function __construct(
         MessageService         $messageService,
@@ -37,7 +37,7 @@ class MessageController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'receiver_id' => 'nullable|exists:users,id',
+                'receiver_id' => 'required|integer|exists:users,id',
                 'group_id' => 'nullable|exists:groups,id',
                 'content' => 'nullable|string',
                 'media_file' => 'required',
@@ -47,8 +47,9 @@ class MessageController extends Controller
                 'recipient_token' => 'nullable|string',
 
             ]);
+            $validatedData['receiver_id'] = intval($request->receiver_id);
             $validatedData['sender_id'] = auth('api')->user()->id;
-            $validatedData['recipient_token'] = $request->recipient_token ? $request->recipient_token : Hash::make(rand(11111,9999999));
+            $validatedData['recipient_token'] = $request->recipient_token ? $request->recipient_token : Hash::make(rand(11111, 9999999));
 
             if ($request->hasFile('media_file')) {
                 $mimeType = $request->file('media_file')->getMimeType();
@@ -80,18 +81,19 @@ class MessageController extends Controller
     {
         try {
             $request->validate([
-                'message_id' => 'required|exists:messages,id',
+                'receiver_id' => 'required|exists:users,id',
             ]);
 
-            $messageId = $request->get('message_id');
+            $receiverId = $request->get('receiver_id');
             $userId = auth('api')->id();
-            $message = $this->messageService->getMessageById($messageId, $userId);
+
+            $receiver = $this->messageService->getUserById($receiverId);
+            $message = $this->messageService->getMessageById($userId, $receiverId);
 
             if (!$message) {
-                return response()->json(['message' => __('messages.message_not_found')], config('request.rsp_not_found'));
+                return response()->json(['error' => __('messages.message_not_found')], config('request.rsp_not_found'));
             }
-
-            return response()->json(['data' => $message], 200);
+            return response()->json(['user' => $receiver, 'messages' => $message], config('request.rsp_success'));
 
         } catch (\Exception $e) {
             return response()->json(['error' => __('messages.error_occurred')], config('request.rsp_error_occurred'));
@@ -103,7 +105,7 @@ class MessageController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getMessagesForUser(Request $request)
+    public function getMessagesForUser()
     {
         try {
             $userId = auth('api')->id();
@@ -113,5 +115,42 @@ class MessageController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => __('messages.error_occurred')], config('request.rsp_error_occurred'));
         }
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function updateTypingStatus(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'is_typing' => 'required|boolean',
+        ]);
+
+        $user = $request->user();
+        $this->messageService->updateUserById($user, $request->all());
+        return response()->json(['message' => __('messages.message_typing_success')], config('request.rsp_success'));
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function updateSeenStatus(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'is_read' => 'required|boolean',
+        ]);
+
+        $user = $request->user();
+        $receiverId = $request->receiver_id;
+        $this->messageService->seenMessage($user, $receiverId, $request->all());
+
+        return response()->json(['message' => __('messages.message_typing_success')], config('request.rsp_success'));
     }
 }
